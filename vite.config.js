@@ -5,5 +5,5 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   assetsInclude: ['**/*.skel'],
-  base: '/Spine-Viewer-Web/',
+  base: '/......./',
 })
