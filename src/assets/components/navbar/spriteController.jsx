@@ -104,7 +104,7 @@ export default function SpriteController({ sprite, onRemove }) {
             <RangeController
                 name="Zoom"
                 min={0}
-                max={1}
+                max={20}
                 step={0.01}
                 initvalue={0.5}
                 setChange={handleZoomChange}
