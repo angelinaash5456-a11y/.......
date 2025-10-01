@@ -36,14 +36,13 @@ export default function UploadButtons({ onOpenChange }) {
 
         blobUrlToArrayBuffer(urlObject.skel)
             .then(arrayBuffer => {
-                const id = assets[assets.length - 1].id;
+                const id = assets.length > 0 ? assets[assets.length - 1].id : 0;
                 const timestamp = Date.now();
                 const spineName = `sprite${id}_${timestamp}`;
                 PIXI.Assets.add({
                     alias: spineName,
                     src: urlObject.atlas,
                     loadParser: "loadTxt",
-                    image: PIXI.BaseTexture.from(urlObject.png),
                 });
 
                 PIXI.Assets.load(spineName).then((resource) => {
@@ -52,7 +51,13 @@ export default function UploadButtons({ onOpenChange }) {
                     //console.log(rawAtlasData);
 
                     var spineAtlas = new TextureAtlas(rawAtlasData, function (line, callback) {
-                        callback(PIXI.BaseTexture.from(urlObject.png));
+                        const url = urlObject.pngs?.[line];
+                        if (!url) {
+                           console.error("Missing texture for:", line);
+                           toast.error(`Missing PNG: ${line}`);
+                           return;
+                        }
+                        callback(PIXI.BaseTexture.from(url));
                     });
                     var spineAtlasLoader = new AtlasAttachmentLoader(spineAtlas)
 
@@ -84,8 +89,8 @@ export default function UploadButtons({ onOpenChange }) {
         const newFiles = Array.from(event.target.files);
         const fileMap = {};
 
-        if (newFiles.length > 3) {
-            toast.error("You cannot upload more than 3 files at a time.");
+        if (newFiles.length > 10) {
+            toast.error("You cannot upload more than 10 files at a time.");
             return;
         }
 
@@ -104,7 +109,11 @@ export default function UploadButtons({ onOpenChange }) {
                 return;
             }
             let url = URL.createObjectURL(file);
-            uploadedFilesUrls[extension] = url;
+       if (extension === "png") {
+           if (!uploadedFilesUrls["pngs"]) uploadedFilesUrls["pngs"] = {};
+           uploadedFilesUrls["pngs"][file.name] = url;
+       } else {
+           uploadedFilesUrls[extension] = url;
 
             fileMap[baseName].add(extension);
         }
@@ -112,8 +121,8 @@ export default function UploadButtons({ onOpenChange }) {
         setNameFile(Object.keys(fileMap)[0] || '');
         setFileData(uploadedFilesUrls);
 
-        if (Object.keys(fileMap).length !== 1 || !fileMap[Object.keys(fileMap)[0]].has('skel') || !fileMap[Object.keys(fileMap)[0]].has('atlas') || !fileMap[Object.keys(fileMap)[0]].has('png')) {
-            toast.error("Upload exactly 3 files: .skel, .atlas, .png with same base name");
+        if (Object.keys(fileMap).length !== 1 || !fileMap[Object.keys(fileMap)[0]].has('skel') || !fileMap[Object.keys(fileMap)[0]].has('atlas') || !uploadedFilesUrls.pngs || Object.keys(uploadedFilesUrls.pngs).length === 0) {
+            toast.error("Upload at least: 1 .skel, 1 .atlas, and one or more .png files");
             return;
         }
 
